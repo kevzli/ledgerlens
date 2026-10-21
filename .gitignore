@@ -1,0 +1,20 @@
+# Dependencies & build output
+node_modules/
+dist/
+
+# Bank statements and exported financial data — never commit
+*.pdf
+*.csv
+*.xlsx
+*.xls
+*.ofx
+*.qfx
+
+# Env / secrets
+.env
+.env.*
+
+# Local tooling
+.claude/settings.local.json
+.DS_Store
+*.log
