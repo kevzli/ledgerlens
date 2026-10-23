@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { LayoutDashboard, Wallet, Upload, List } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { LayoutDashboard, Wallet, Upload, List, Download, FolderOpen } from 'lucide-react';
 import { AppData, BudgetCategory, Page, Transaction } from './types';
-import { loadData, saveData } from './utils/storage';
+import { loadData, saveData, exportData, parseBackup } from './utils/storage';
 import { normalizeMerchant } from './utils/bankParsers';
 import Dashboard from './components/Dashboard';
 import BudgetSetup from './components/BudgetSetup';
@@ -23,9 +23,22 @@ export default function App() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
+  const [backupMsg, setBackupMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const importInput = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     saveData(data);
   }, [data]);
+
+  const importBackup = async (file: File) => {
+    try {
+      const imported = parseBackup(await file.text());
+      setData(imported);
+      setBackupMsg({ ok: true, text: `Imported ${imported.transactions.length} transactions and ${imported.categories.length} categories.` });
+    } catch (e) {
+      setBackupMsg({ ok: false, text: e instanceof Error ? e.message : 'Import failed.' });
+    }
+  };
 
   const updateCategories = useCallback((categories: BudgetCategory[]) => {
     setData(prev => ({ ...prev, categories }));
@@ -112,8 +125,36 @@ export default function App() {
             </button>
           ))}
         </nav>
-        <div className="px-6 py-4 border-t border-gray-700">
-          <p className="text-gray-500 text-xs">Data saved locally in your browser</p>
+        <div className="px-3 py-4 border-t border-gray-700 space-y-1">
+          <button
+            onClick={() => { exportData(data); setBackupMsg(null); }}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+          >
+            <Download size={16} />
+            Export data
+          </button>
+          <button
+            onClick={() => importInput.current?.click()}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+          >
+            <FolderOpen size={16} />
+            Import data
+          </button>
+          <input
+            ref={importInput}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0];
+              if (file) importBackup(file);
+              e.target.value = '';
+            }}
+          />
+          {backupMsg && (
+            <p className={`px-3 pt-1 text-xs ${backupMsg.ok ? 'text-green-400' : 'text-red-400'}`}>{backupMsg.text}</p>
+          )}
+          <p className="px-3 pt-2 text-gray-500 text-xs">Data saved locally on this device</p>
         </div>
       </aside>
 

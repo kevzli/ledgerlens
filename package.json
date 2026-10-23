@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "app": "vite build && electron .",
+    "build:mac": "tsc && vite build && electron-builder --mac dir"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",
@@ -26,9 +28,30 @@
     "@types/uuid": "^9.0.7",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.17",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.2.2",
     "vite": "^5.1.0"
+  },
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.kevzli.ledgerlens",
+    "productName": "LedgerLens",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.finance",
+      "target": "dir",
+      "identity": null
+    }
   }
 }

@@ -55,21 +55,24 @@ const DEFAULT_CATEGORIES: BudgetCategory[] = [
   },
 ];
 
+const migrate = (parsed: AppData): AppData => {
+  // Migrate: default type to 'expense' for transactions saved before this field existed
+  parsed.transactions = parsed.transactions.map(t => ({
+    ...t,
+    type: (t.type ?? 'expense') as Transaction['type'],
+  }));
+  // Migrate: add categoryMemory if not present
+  parsed.categoryMemory = parsed.categoryMemory ?? {};
+  return parsed;
+};
+
 export const loadData = (): AppData => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       return { categories: DEFAULT_CATEGORIES, transactions: [], monthlyIncome: 5235, categoryMemory: {} };
     }
-    const parsed = JSON.parse(raw) as AppData;
-    // Migrate: default type to 'expense' for transactions saved before this field existed
-    parsed.transactions = parsed.transactions.map(t => ({
-      ...t,
-      type: (t.type ?? 'expense') as Transaction['type'],
-    }));
-    // Migrate: add categoryMemory if not present
-    parsed.categoryMemory = parsed.categoryMemory ?? {};
-    return parsed;
+    return migrate(JSON.parse(raw) as AppData);
   } catch {
     return { categories: DEFAULT_CATEGORIES, transactions: [], monthlyIncome: 5235, categoryMemory: {} };
   }
@@ -77,4 +80,30 @@ export const loadData = (): AppData => {
 
 export const saveData = (data: AppData): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+};
+
+// Downloads all app data as a JSON backup file (used to move data between the browser and desktop app)
+export const exportData = (data: AppData): void => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ledgerlens-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+// Parses a backup file; throws a readable error if it isn't one
+export const parseBackup = (text: string): AppData => {
+  let parsed: AppData;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error('That file isn’t valid JSON — pick a ledgerlens-backup-….json file.');
+  }
+  if (!parsed || !Array.isArray(parsed.categories) || !Array.isArray(parsed.transactions)) {
+    throw new Error('That file isn’t a LedgerLens backup (no categories/transactions found).');
+  }
+  parsed.monthlyIncome = typeof parsed.monthlyIncome === 'number' ? parsed.monthlyIncome : 0;
+  return migrate(parsed);
 };
