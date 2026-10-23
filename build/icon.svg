@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- macOS icon grid: 824px body centred in 1024 canvas -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="#1f2433"/>
+  <g fill="none" stroke="#9aa6bd" stroke-width="26" stroke-linecap="round" opacity="0.9">
+    <ellipse cx="512" cy="512" rx="290" ry="118" transform="rotate(-30 512 512)"/>
+    <ellipse cx="512" cy="512" rx="290" ry="118" transform="rotate(30 512 512)"/>
+  </g>
+  <circle cx="512" cy="512" r="44" fill="#818cf8"/>
+</svg>
